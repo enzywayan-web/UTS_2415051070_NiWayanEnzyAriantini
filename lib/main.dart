@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/theme/app_theme.dart';
 import 'providers/transaction_provider.dart';
@@ -8,16 +8,16 @@ import 'repositories/transaction_repository.dart';
 import 'services/transaction_service.dart';
 import 'screens/main_navigation_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('id_ID', null);
+
   final transactionService = TransactionService();
-
-  final transactionRepository = TransactionRepository(
-    transactionService,
-  );
-
-  final transactionProvider = TransactionProvider(
-    transactionRepository,
-  );
+  final transactionRepository =
+      TransactionRepository(transactionService);
+  final transactionProvider =
+      TransactionProvider(transactionRepository);
 
   runApp(
     MultiProvider(

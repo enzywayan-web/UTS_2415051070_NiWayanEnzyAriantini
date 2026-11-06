@@ -7,6 +7,7 @@ import 'transaction_list_screen.dart';
 import 'analytics_screen.dart';
 import 'saving_goals_screen.dart';
 import 'profile_screen.dart';
+import 'add_transaction_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -28,12 +29,31 @@ class _MainNavigationScreenState
     ProfileScreen(),
   ];
 
+  void _openAddTransaction() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AddTransactionScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openAddTransaction,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          'Tambah Transaksi',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
