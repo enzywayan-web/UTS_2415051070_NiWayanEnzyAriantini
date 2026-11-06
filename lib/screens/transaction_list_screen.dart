@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../models/transaction_model.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_tile.dart';
+import 'transaction_detail_screen.dart';
 
 class TransactionListScreen extends StatefulWidget {
   const TransactionListScreen({super.key});
@@ -205,11 +206,11 @@ class _TransactionListScreenState
                                     return TransactionTile(
                                       transaction: transaction,
                                       onTap: () {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Detail transaksi akan dibuat pada tahap berikutnya.',
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => TransactionDetailScreen(
+                                              transaction: transaction,
                                             ),
                                           ),
                                         );
