@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/transaction_model.dart';
+import 'edit_transaction_screen.dart';
 
 class TransactionDetailScreen extends StatelessWidget {
   final TransactionModel transaction;
@@ -136,6 +136,40 @@ class TransactionDetailScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditTransactionScreen(
+                      transaction: transaction,
+                    ),
+                  ),
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Edit Transaksi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
