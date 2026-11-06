@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/main_navigation_screen.dart';
 
 void main() {
   runApp(const DuitlyApp());
@@ -16,7 +16,7 @@ class DuitlyApp extends StatelessWidget {
       title: 'Duitly',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const DashboardScreen(),
+      home: const MainNavigationScreen(),
     );
   }
 }
