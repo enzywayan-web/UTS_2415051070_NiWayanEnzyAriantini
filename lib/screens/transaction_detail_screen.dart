@@ -1,8 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../models/transaction_model.dart';
+import '../providers/transaction_provider.dart';
 import 'edit_transaction_screen.dart';
 
 class TransactionDetailScreen extends StatelessWidget {
@@ -22,6 +25,57 @@ class TransactionDetailScreen extends StatelessWidget {
 
     final prefix = transaction.isIncome ? '+ ' : '- ';
     return '$prefix${formatter.format(transaction.amount)}';
+  }
+
+  Future<void> _deleteTransaction(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Hapus Transaksi?'),
+          content: Text(
+            'Apakah kamu yakin ingin menghapus '
+            '"${transaction.title}"? '
+            'Transaksi yang dihapus tidak dapat dikembalikan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.expense,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Ya, Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    context
+        .read<TransactionProvider>()
+        .deleteTransaction(transaction.id);
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Transaksi berhasil dihapus.'),
+        backgroundColor: AppColors.income,
+      ),
+    );
   }
 
   @override
@@ -141,34 +195,60 @@ class TransactionDetailScreen extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditTransactionScreen(
-                      transaction: transaction,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditTransactionScreen(
+                          transaction: transaction,
+                        ),
+                      ),
+                    );
+
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Edit Transaksi'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                );
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
-              },
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Edit Transaksi'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
-            ),
+
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _deleteTransaction(context),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Hapus Transaksi'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.expense,
+                    side: const BorderSide(
+                      color: AppColors.expense,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
