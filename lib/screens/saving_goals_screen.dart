@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../models/saving_goal_model.dart';
 import '../providers/saving_goal_provider.dart';
 import 'saving_entry_screen.dart';
+import 'saving_history_screen.dart';
 
 class SavingGoalsScreen extends StatefulWidget {
   const SavingGoalsScreen({super.key});
@@ -344,6 +345,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                       MaterialPageRoute(
                         builder: (context) => SavingEntryScreen(
                           goal: goal,
+                          initialType: 'deposit',
                         ),
                       ),
                     );
@@ -356,7 +358,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: goal.currentAmount <= 0
@@ -367,12 +369,30 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                             MaterialPageRoute(
                               builder: (context) => SavingEntryScreen(
                                 goal: goal,
+                                initialType: 'withdrawal',
                               ),
                             ),
                           );
                         },
                   icon: const Icon(Icons.remove_circle_outline),
                   label: const Text('Tarik'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SavingHistoryScreen(
+                          goal: goal,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.history),
+                  label: const Text('Riwayat'),
                 ),
               ),
             ],
