@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../core/constants/app_colors.dart';
 import '../models/saving_goal_model.dart';
 import '../providers/saving_goal_provider.dart';
+import 'saving_entry_screen.dart';
 
 class SavingGoalsScreen extends StatefulWidget {
   const SavingGoalsScreen({super.key});
@@ -333,6 +333,50 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
               ),
             ),
           ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SavingEntryScreen(
+                          goal: goal,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('Tambah'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: goal.currentAmount <= 0
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SavingEntryScreen(
+                                goal: goal,
+                              ),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.remove_circle_outline),
+                  label: const Text('Tarik'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
