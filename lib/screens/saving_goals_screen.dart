@@ -55,6 +55,33 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
     decimalDigits: 0,
   );
 
+  // Menyimpan ID target yang ditandai sebagai favorit.
+  final Set<String> _favoriteGoalIds = {};
+
+  // Mengaktifkan atau menonaktifkan Love.
+  void _toggleFavorite(String goalId) {
+    final isFavorite = _favoriteGoalIds.contains(goalId);
+
+    setState(() {
+      if (isFavorite) {
+        _favoriteGoalIds.remove(goalId);
+      } else {
+        _favoriteGoalIds.add(goalId);
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFavorite
+              ? 'Target dihapus dari favorit.'
+              : 'Target ditambahkan ke favorit.',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   Future<void> _editGoal(SavingGoalModel goal) async {
     final updatedGoal = await showDialog<SavingGoalModel>(
       context: context,
@@ -123,6 +150,10 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
       await context.read<SavingGoalProvider>().deleteGoal(goal.id);
 
       if (!mounted) return;
+
+      setState(() {
+        _favoriteGoalIds.remove(goal.id);
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -277,6 +308,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
 
   Widget _buildGoalCard(SavingGoalModel goal) {
     final percentage = (goal.progress * 100).toStringAsFixed(0);
+    final isFavorite = _favoriteGoalIds.contains(goal.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -284,11 +316,15 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(
+          color: isFavorite ? Colors.redAccent : AppColors.border,
+          width: isFavorite ? 1.5 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header kartu: Love, Edit, dan Hapus.
           Row(
             children: [
               Container(
@@ -302,7 +338,7 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   goal.title,
@@ -317,51 +353,55 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                 const Icon(
                   Icons.check_circle,
                   color: AppColors.income,
+                  size: 20,
                 ),
-              PopupMenuButton<String>(
-                tooltip: 'Pengaturan target',
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    _editGoal(goal);
-                  } else if (value == 'delete') {
-                    _deleteGoal(goal);
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 20,
-                        ),
-                        SizedBox(width: 10),
-                        Text('Edit target'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline,
-                          color: AppColors.expense,
-                          size: 20,
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          'Hapus target',
-                          style: TextStyle(
-                            color: AppColors.expense,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                icon: const Icon(Icons.more_vert),
+              IconButton(
+                tooltip: isFavorite
+                    ? 'Hapus dari favorit'
+                    : 'Tambahkan ke favorit',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                padding: EdgeInsets.zero,
+                onPressed: () => _toggleFavorite(goal.id),
+                icon: Icon(
+                  isFavorite
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+                  color: isFavorite
+                      ? Colors.red
+                      : AppColors.textSecondary,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Edit target',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                padding: EdgeInsets.zero,
+                onPressed: () => _editGoal(goal),
+                icon: const Icon(
+                  Icons.edit_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Hapus target',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                padding: EdgeInsets.zero,
+                onPressed: () => _deleteGoal(goal),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.expense,
+                ),
               ),
             ],
           ),
