@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -11,7 +12,6 @@ import 'saving_history_screen.dart';
 class SavingGoalsScreen extends StatefulWidget {
   const SavingGoalsScreen({super.key});
 
-  // Dialog ini bisa dipanggil dari tombol FAB di MainNavigationScreen.
   static Future<void> showAddGoalDialog(BuildContext context) async {
     final goal = await showDialog<SavingGoalModel>(
       context: context,
@@ -54,6 +54,93 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
     symbol: 'Rp ',
     decimalDigits: 0,
   );
+
+  Future<void> _editGoal(SavingGoalModel goal) async {
+    final updatedGoal = await showDialog<SavingGoalModel>(
+      context: context,
+      builder: (context) => _SavingGoalFormDialog(
+        existingGoal: goal,
+      ),
+    );
+
+    if (updatedGoal == null || !mounted) return;
+
+    try {
+      await context
+          .read<SavingGoalProvider>()
+          .updateGoal(updatedGoal);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Target tabungan berhasil diperbarui.'),
+          backgroundColor: AppColors.income,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memperbarui target: $error'),
+          backgroundColor: AppColors.expense,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteGoal(SavingGoalModel goal) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus Target Tabungan?'),
+        content: Text(
+          'Apakah kamu yakin ingin menghapus target "${goal.title}"? '
+          'Seluruh riwayat aktivitas target ini juga akan terhapus. '
+          'Tindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.expense,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await context.read<SavingGoalProvider>().deleteGoal(goal.id);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Target tabungan berhasil dihapus.'),
+          backgroundColor: AppColors.income,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus target: $error'),
+          backgroundColor: AppColors.expense,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -231,6 +318,51 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
                   Icons.check_circle,
                   color: AppColors.income,
                 ),
+              PopupMenuButton<String>(
+                tooltip: 'Pengaturan target',
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _editGoal(goal);
+                  } else if (value == 'delete') {
+                    _deleteGoal(goal);
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                        ),
+                        SizedBox(width: 10),
+                        Text('Edit target'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete_outline,
+                          color: AppColors.expense,
+                          size: 20,
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Hapus target',
+                          style: TextStyle(
+                            color: AppColors.expense,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                icon: const Icon(Icons.more_vert),
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -480,7 +612,11 @@ class _SavingGoalsScreenState extends State<SavingGoalsScreen> {
 }
 
 class _SavingGoalFormDialog extends StatefulWidget {
-  const _SavingGoalFormDialog();
+  final SavingGoalModel? existingGoal;
+
+  const _SavingGoalFormDialog({
+    this.existingGoal,
+  });
 
   @override
   State<_SavingGoalFormDialog> createState() =>
@@ -490,10 +626,27 @@ class _SavingGoalFormDialog extends StatefulWidget {
 class _SavingGoalFormDialogState
     extends State<_SavingGoalFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _amountController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _amountController;
 
   DateTime? _targetDate;
+
+  bool get _isEditing => widget.existingGoal != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _titleController = TextEditingController(
+      text: widget.existingGoal?.title ?? '',
+    );
+
+    _amountController = TextEditingController(
+      text: widget.existingGoal?.targetAmount.toStringAsFixed(0) ?? '',
+    );
+
+    _targetDate = widget.existingGoal?.targetDate;
+  }
 
   @override
   void dispose() {
@@ -526,13 +679,34 @@ class _SavingGoalFormDialogState
       _amountController.text.trim().replaceAll(',', '.'),
     );
 
+    final existingGoal = widget.existingGoal;
+
+    if (existingGoal != null &&
+        amount < existingGoal.currentAmount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Target tidak boleh kurang dari jumlah terkumpul '
+            '(${NumberFormat.currency(
+              locale: 'id_ID',
+              symbol: 'Rp ',
+              decimalDigits: 0,
+            ).format(existingGoal.currentAmount)}).',
+          ),
+          backgroundColor: AppColors.expense,
+        ),
+      );
+      return;
+    }
+
     final goal = SavingGoalModel(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: existingGoal?.id ??
+          DateTime.now().microsecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
       targetAmount: amount,
-      currentAmount: 0,
+      currentAmount: existingGoal?.currentAmount ?? 0,
       targetDate: _targetDate,
-      createdAt: DateTime.now(),
+      createdAt: existingGoal?.createdAt ?? DateTime.now(),
     );
 
     Navigator.of(context).pop(goal);
@@ -541,9 +715,11 @@ class _SavingGoalFormDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(
-        'Tambah Target Tabungan',
-        style: TextStyle(fontWeight: FontWeight.bold),
+      title: Text(
+        _isEditing
+            ? 'Edit Target Tabungan'
+            : 'Tambah Target Tabungan',
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -601,6 +777,15 @@ class _SavingGoalFormDialogState
                           .format(_targetDate!),
                 ),
               ),
+              if (_targetDate != null)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _targetDate = null;
+                    });
+                  },
+                  child: const Text('Hapus tanggal target'),
+                ),
             ],
           ),
         ),
@@ -612,7 +797,7 @@ class _SavingGoalFormDialogState
         ),
         ElevatedButton(
           onPressed: _saveGoal,
-          child: const Text('Simpan Target'),
+          child: Text(_isEditing ? 'Simpan Perubahan' : 'Simpan Target'),
         ),
       ],
     );
