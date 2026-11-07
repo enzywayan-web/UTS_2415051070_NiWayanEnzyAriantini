@@ -1,3 +1,4 @@
+import '../providers/saving_goal_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -44,6 +45,7 @@ class _MainNavigationScreenState
         if (!mounted) return;
 
         context.read<TransactionProvider>().loadTransactions();
+context.read<SavingGoalProvider>().loadGoals();
       });
     }
   }
