@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -79,13 +80,8 @@ class _TransactionListScreenState
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    if (date == today) {
-      return 'Hari Ini';
-    }
-
-    if (date == yesterday) {
-      return 'Kemarin';
-    }
+    if (date == today) return 'Hari Ini';
+    if (date == yesterday) return 'Kemarin';
 
     return DateFormat('dd/MM/yyyy').format(date);
   }
@@ -102,177 +98,278 @@ class _TransactionListScreenState
       ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, child) {
-          final transactions = _getFilteredTransactions(
-            provider.transactions,
-          );
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 850;
 
-          final groupedTransactions =
-              _groupTransactions(transactions);
+              final controls = _buildControls(
+                isWide: isWide,
+              );
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Cari transaksi...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchQuery = '';
-                                  });
-                                },
-                                icon: const Icon(Icons.close),
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: AppColors.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: AppColors.border,
+              final results = _buildResults(provider);
+
+              return Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 1200,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: isWide
+                        ? Row(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 280,
+                                child: controls,
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(child: results),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              controls,
+                              const SizedBox(height: 12),
+                              Expanded(child: results),
+                            ],
                           ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: AppColors.border,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        _buildFilterButton('Semua'),
-                        const SizedBox(width: 8),
-                        _buildFilterButton('Pemasukan'),
-                        const SizedBox(width: 8),
-                        _buildFilterButton('Pengeluaran'),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: transactions.isEmpty
-                    ? _buildEmptyState()
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(
-                          16,
-                          0,
-                          16,
-                          20,
-                        ),
-                        children: groupedTransactions.entries.map(
-                          (entry) {
-                            return Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 8,
-                                    bottom: 10,
-                                  ),
-                                  child: Text(
-                                    _formatDate(entry.key),
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                ...entry.value.map(
-                                  (transaction) {
-                                    return TransactionTile(
-                                      transaction: transaction,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => TransactionDetailScreen(
-                                              transaction: transaction,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        ).toList(),
-                      ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),
+    );
+  }
+
+  Widget _buildControls({required bool isWide}) {
+    final searchField = TextField(
+      controller: _searchController,
+      onChanged: (value) {
+        setState(() {
+          _searchQuery = value;
+        });
+      },
+      decoration: InputDecoration(
+        hintText: 'Cari transaksi...',
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+                icon: const Icon(Icons.close),
+              )
+            : null,
+        filled: true,
+        fillColor: AppColors.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: AppColors.border,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: AppColors.border,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+    );
+
+    if (isWide) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          searchField,
+          const SizedBox(height: 18),
+          const Text(
+            'Filter Transaksi',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildFilterButton('Semua'),
+          const SizedBox(height: 8),
+          _buildFilterButton('Pemasukan'),
+          const SizedBox(height: 8),
+          _buildFilterButton('Pengeluaran'),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        searchField,
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(child: _buildFilterButton('Semua')),
+            const SizedBox(width: 8),
+            Expanded(child: _buildFilterButton('Pemasukan')),
+            const SizedBox(width: 8),
+            Expanded(child: _buildFilterButton('Pengeluaran')),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResults(TransactionProvider provider) {
+    final transactions = _getFilteredTransactions(
+      provider.transactions,
+    );
+
+    final groupedTransactions =
+        _groupTransactions(transactions);
+
+    Widget content;
+
+    if (provider.isLoading && provider.transactions.isEmpty) {
+      content = const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary,
+        ),
+      );
+    } else if (provider.errorMessage != null &&
+        provider.transactions.isEmpty) {
+      content = _buildErrorState(
+        provider.errorMessage!,
+        provider.loadTransactions,
+      );
+    } else if (transactions.isEmpty) {
+      content = _buildEmptyState(
+        hasAnyTransaction: provider.transactions.isNotEmpty,
+      );
+    } else {
+      content = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 20),
+        children: groupedTransactions.entries.map((entry) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: 8,
+                  bottom: 10,
+                ),
+                child: Text(
+                  _formatDate(entry.key),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              ...entry.value.map((transaction) {
+                return TransactionTile(
+                  transaction: transaction,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            TransactionDetailScreen(
+                          transaction: transaction,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            ],
+          );
+        }).toList(),
+      );
+    }
+
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: provider.loadTransactions,
+      child: content is ListView
+          ? content
+          : ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: 350,
+                  child: content,
+                ),
+              ],
+            ),
     );
   }
 
   Widget _buildFilterButton(String label) {
     final isSelected = _selectedFilter == label;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedFilter = label;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: BoxDecoration(
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedFilter = label;
+        });
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.border,
-            ),
+                : AppColors.border,
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isSelected
-                  ? Colors.white
-                  : AppColors.textSecondary,
-            ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : AppColors.textSecondary,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState({
+    required bool hasAnyTransaction,
+  }) {
     final isSearching = _searchQuery.isNotEmpty ||
         _selectedFilter != 'Semua';
+
+    final title = isSearching
+        ? 'Transaksi Tidak Ditemukan'
+        : 'Belum Ada Transaksi';
+
+    final description = isSearching
+        ? 'Coba gunakan kata kunci atau filter yang berbeda.'
+        : 'Transaksi yang kamu tambahkan nantinya akan muncul di sini.';
 
     return Center(
       child: Padding(
@@ -289,9 +386,7 @@ class _TransactionListScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              isSearching
-                  ? 'Transaksi Tidak Ditemukan'
-                  : 'Belum Ada Transaksi',
+              title,
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
@@ -300,13 +395,60 @@ class _TransactionListScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              isSearching
-                  ? 'Coba gunakan kata kunci atau filter yang berbeda.'
-                  : 'Transaksi yang kamu tambahkan nantinya akan muncul di sini.',
+              description,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(
+    String message,
+    Future<void> Function() onRetry,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: 55,
+              color: AppColors.expense,
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Gagal Memuat Transaksi',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Periksa koneksi internet atau coba beberapa saat lagi.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
               ),
             ),
           ],
