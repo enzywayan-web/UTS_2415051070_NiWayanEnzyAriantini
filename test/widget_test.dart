@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'package:duitly/main.dart';
 import 'package:duitly/providers/transaction_provider.dart';
+import 'package:duitly/providers/budget_provider.dart';
 import 'package:duitly/repositories/transaction_repository.dart';
 import 'package:duitly/services/transaction_service.dart';
 
@@ -39,12 +40,21 @@ void main() {
     final transactionProvider =
         TransactionProvider(transactionRepository);
 
+    final budgetProvider = BudgetProvider();
+
     await tester.pumpWidget(
-      ChangeNotifierProvider<TransactionProvider>.value(
-        value: transactionProvider,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<TransactionProvider>.value(
+            value: transactionProvider,
+          ),
+          ChangeNotifierProvider<BudgetProvider>.value(
+            value: budgetProvider,
+          ),
+        ],
         child: const DuitlyApp(
           loadInitialData: false,
-),
+        ),
       ),
     );
 
