@@ -64,18 +64,31 @@ class TransactionDetailScreen extends StatelessWidget {
       return;
     }
 
-    context
-        .read<TransactionProvider>()
-        .deleteTransaction(transaction.id);
+    try {
+      await context
+          .read<TransactionProvider>()
+          .deleteTransaction(transaction.id);
 
-    Navigator.pop(context);
+      if (!context.mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Transaksi berhasil dihapus.'),
-        backgroundColor: AppColors.income,
-      ),
-    );
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaksi berhasil dihapus.'),
+          backgroundColor: AppColors.income,
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus transaksi: $error'),
+          backgroundColor: AppColors.expense,
+        ),
+      );
+    }
   }
 
   @override
@@ -100,7 +113,6 @@ class TransactionDetailScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-
             Container(
               width: 76,
               height: 76,
@@ -116,9 +128,7 @@ class TransactionDetailScreen extends StatelessWidget {
                 size: 36,
               ),
             ),
-
             const SizedBox(height: 20),
-
             Text(
               isIncome ? 'Pemasukan' : 'Pengeluaran',
               style: const TextStyle(
@@ -126,9 +136,7 @@ class TransactionDetailScreen extends StatelessWidget {
                 fontSize: 15,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               formattedAmount,
               style: TextStyle(
@@ -137,9 +145,7 @@ class TransactionDetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 30),
-
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -159,18 +165,13 @@ class TransactionDetailScreen extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   _detailItem('Nama Transaksi', transaction.title),
-
                   _detailItem('Kategori', transaction.category),
-
                   _detailItem(
                     'Jenis Transaksi',
                     isIncome ? 'Pemasukan' : 'Pengeluaran',
                   ),
-
                   _detailItem(
                     'Tanggal',
                     DateFormat(
@@ -178,7 +179,6 @@ class TransactionDetailScreen extends StatelessWidget {
                       'id_ID',
                     ).format(transaction.date),
                   ),
-
                   _detailItem(
                     'Catatan',
                     transaction.note?.trim().isNotEmpty == true
@@ -227,9 +227,7 @@ class TransactionDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(

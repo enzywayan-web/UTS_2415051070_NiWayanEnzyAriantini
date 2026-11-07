@@ -1,30 +1,47 @@
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/transaction_model.dart';
 
 class TransactionService {
-  final List<TransactionModel> _transactions = [];
+  final SupabaseClient _client = Supabase.instance.client;
 
-  List<TransactionModel> getTransactions() {
-    return List.unmodifiable(_transactions);
+  Future<List<TransactionModel>> getTransactions() async {
+    final response = await _client
+        .from('transactions')
+        .select()
+        .order('date', ascending: false);
+
+    return (response as List)
+        .map(
+          (item) => TransactionModel.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .toList();
   }
 
-  void addTransaction(TransactionModel transaction) {
-    _transactions.insert(0, transaction);
+  Future<void> addTransaction(
+    TransactionModel transaction,
+  ) async {
+    await _client
+        .from('transactions')
+        .insert(transaction.toJson());
   }
 
-  void updateTransaction(TransactionModel updatedTransaction) {
-    final index = _transactions.indexWhere(
-      (transaction) => transaction.id == updatedTransaction.id,
-    );
-
-    if (index == -1) return;
-
-    _transactions[index] = updatedTransaction;
+  Future<void> updateTransaction(
+    TransactionModel transaction,
+  ) async {
+    await _client
+        .from('transactions')
+        .update(transaction.toJson())
+        .eq('id', transaction.id);
   }
 
-  void deleteTransaction(String id) {
-    _transactions.removeWhere(
-      (transaction) => transaction.id == id,
-    );
+  Future<void> deleteTransaction(String id) async {
+    await _client
+        .from('transactions')
+        .delete()
+        .eq('id', id);
   }
 }

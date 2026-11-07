@@ -1,7 +1,8 @@
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../providers/transaction_provider.dart';
 import 'dashboard_screen.dart';
 import 'transaction_list_screen.dart';
 import 'analytics_screen.dart';
@@ -10,7 +11,12 @@ import 'profile_screen.dart';
 import 'add_transaction_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final bool loadInitialData;
+
+  const MainNavigationScreen({
+    super.key,
+    this.loadInitialData = true,
+  });
 
   @override
   State<MainNavigationScreen> createState() =>
@@ -28,6 +34,19 @@ class _MainNavigationScreenState
     SavingGoalsScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.loadInitialData) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        context.read<TransactionProvider>().loadTransactions();
+      });
+    }
+  }
 
   void _openAddTransaction() {
     Navigator.push(

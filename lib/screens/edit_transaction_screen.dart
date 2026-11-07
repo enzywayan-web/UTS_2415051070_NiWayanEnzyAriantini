@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -105,7 +104,7 @@ class _EditTransactionScreenState
     }
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -142,18 +141,31 @@ class _EditTransactionScreenState
           : _noteController.text.trim(),
     );
 
-    context
-        .read<TransactionProvider>()
-        .updateTransaction(updatedTransaction);
+    try {
+      await context
+          .read<TransactionProvider>()
+          .updateTransaction(updatedTransaction);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Transaksi berhasil diperbarui.'),
-        backgroundColor: AppColors.income,
-      ),
-    );
+      if (!mounted) return;
 
-    Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaksi berhasil diperbarui.'),
+          backgroundColor: AppColors.income,
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memperbarui transaksi: $error'),
+          backgroundColor: AppColors.expense,
+        ),
+      );
+    }
   }
 
   @override

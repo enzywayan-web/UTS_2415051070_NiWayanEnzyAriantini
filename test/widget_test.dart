@@ -42,7 +42,9 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<TransactionProvider>.value(
         value: transactionProvider,
-        child: const DuitlyApp(),
+        child: const DuitlyApp(
+          loadInitialData: false,
+),
       ),
     );
 

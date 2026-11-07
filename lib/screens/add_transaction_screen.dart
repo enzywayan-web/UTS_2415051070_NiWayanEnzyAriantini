@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -70,7 +69,7 @@ class _AddTransactionScreenState
     }
   }
 
-  void _saveTransaction() {
+  Future<void> _saveTransaction() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_category == null) {
@@ -96,16 +95,31 @@ class _AddTransactionScreenState
           : _noteController.text.trim(),
     );
 
-    context.read<TransactionProvider>().addTransaction(transaction);
+    try {
+      await context
+          .read<TransactionProvider>()
+          .addTransaction(transaction);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Transaksi berhasil ditambahkan!'),
-        backgroundColor: AppColors.income,
-      ),
-    );
+      if (!mounted) return;
 
-    Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaksi berhasil ditambahkan!'),
+          backgroundColor: AppColors.income,
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyimpan transaksi: $error'),
+          backgroundColor: AppColors.expense,
+        ),
+      );
+    }
   }
 
   @override

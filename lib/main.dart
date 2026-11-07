@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -40,7 +39,12 @@ Future<void> main() async {
 }
 
 class DuitlyApp extends StatelessWidget {
-  const DuitlyApp({super.key});
+  final bool loadInitialData;
+
+  const DuitlyApp({
+    super.key,
+    this.loadInitialData = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +52,9 @@ class DuitlyApp extends StatelessWidget {
       title: 'Duitly',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const MainNavigationScreen(),
+      home: MainNavigationScreen(
+        loadInitialData: loadInitialData,
+      ),
     );
   }
 }

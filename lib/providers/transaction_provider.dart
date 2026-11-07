@@ -9,73 +9,91 @@ class TransactionProvider extends ChangeNotifier {
 
   final List<TransactionModel> _transactions = [];
 
-  TransactionProvider(this._repository) {
-    _transactions.addAll(_repository.getTransactions());
-  }
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  TransactionProvider(this._repository);
 
   List<TransactionModel> get transactions {
     return List.unmodifiable(_transactions);
   }
 
-  List<TransactionModel> get incomes {
-    return _transactions
-        .where((transaction) => transaction.isIncome)
-        .toList();
-  }
+  bool get isLoading => _isLoading;
 
-  List<TransactionModel> get expenses {
-    return _transactions
-        .where((transaction) => transaction.isExpense)
-        .toList();
-  }
+  String? get errorMessage => _errorMessage;
 
-  double get totalIncome {
-    return incomes.fold(
-      0,
-      (total, transaction) => total + transaction.amount,
-    );
-  }
+  List<TransactionModel> get incomes =>
+      _transactions.where((t) => t.isIncome).toList();
 
-  double get totalExpense {
-    return expenses.fold(
-      0,
-      (total, transaction) => total + transaction.amount,
-    );
-  }
+  List<TransactionModel> get expenses =>
+      _transactions.where((t) => t.isExpense).toList();
+
+  double get totalIncome =>
+      incomes.fold(0, (total, t) => total + t.amount);
+
+  double get totalExpense =>
+      expenses.fold(0, (total, t) => total + t.amount);
 
   double get balance => totalIncome - totalExpense;
 
-  void addTransaction(TransactionModel transaction) {
-    _repository.addTransaction(transaction);
+  Future<void> loadTransactions() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _repository.getTransactions();
+
+      _transactions
+        ..clear()
+        ..addAll(result);
+    } catch (error) {
+      _errorMessage = error.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> addTransaction(
+    TransactionModel transaction,
+  ) async {
+    await _repository.addTransaction(transaction);
     _transactions.insert(0, transaction);
     notifyListeners();
   }
 
-  void updateTransaction(TransactionModel updatedTransaction) {
+  Future<void> updateTransaction(
+    TransactionModel updatedTransaction,
+  ) async {
     final index = _transactions.indexWhere(
-      (transaction) => transaction.id == updatedTransaction.id,
+      (t) => t.id == updatedTransaction.id,
     );
 
     if (index == -1) return;
 
-    _repository.updateTransaction(updatedTransaction);
+    await _repository.updateTransaction(updatedTransaction);
+
     _transactions[index] = updatedTransaction;
     notifyListeners();
   }
 
-  void deleteTransaction(String id) {
-    _repository.deleteTransaction(id);
+  Future<void> deleteTransaction(String id) async {
+    await _repository.deleteTransaction(id);
 
     _transactions.removeWhere(
-      (transaction) => transaction.id == id,
+      (t) => t.id == id,
     );
 
     notifyListeners();
   }
 
-  void clearTransactions() {
-    for (final transaction in List<TransactionModel>.from(_transactions)) {
-      _repository.deleteTransaction(transaction.id);
+  Future<void> clearTransactions() async {
+    final currentTransactions =
+        List<TransactionModel>.from(_transactions);
+
+    for (final transaction in currentTransactions) {
+      await _repository.deleteTransaction(transaction.id);
     }
 
     _transactions.clear();
