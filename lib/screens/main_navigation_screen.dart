@@ -9,6 +9,7 @@ import '../providers/saving_goal_provider.dart';
 import 'dashboard_screen.dart';
 import 'transaction_list_screen.dart';
 import 'analytics_screen.dart';
+import 'budget_screen.dart';
 import 'saving_goals_screen.dart';
 import 'profile_screen.dart';
 import 'add_transaction_screen.dart';
@@ -34,6 +35,7 @@ class _MainNavigationScreenState
     DashboardScreen(),
     TransactionListScreen(),
     AnalyticsScreen(),
+    BudgetScreen(),
     SavingGoalsScreen(),
     ProfileScreen(),
   ];
@@ -62,7 +64,7 @@ class _MainNavigationScreenState
   }
 
   void _handleFabPressed() {
-    if (_selectedIndex == 3) {
+    if (_selectedIndex == 4) {
       SavingGoalsScreen.showAddGoalDialog(context);
     } else {
       _openAddTransaction();
@@ -71,7 +73,7 @@ class _MainNavigationScreenState
 
   @override
   Widget build(BuildContext context) {
-    final bool isGoalsPage = _selectedIndex == 3;
+    final bool isGoalsPage = _selectedIndex == 4;
 
     return Scaffold(
       body: IndexedStack(
@@ -113,6 +115,11 @@ class _MainNavigationScreenState
             icon: Icon(Icons.analytics_outlined),
             selectedIcon: Icon(Icons.analytics),
             label: 'Analytics',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(Icons.account_balance_wallet),
+            label: 'Budget',
           ),
           NavigationDestination(
             icon: Icon(Icons.savings_outlined),
