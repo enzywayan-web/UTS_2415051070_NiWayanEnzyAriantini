@@ -1,9 +1,11 @@
-import '../providers/saving_goal_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/saving_goal_provider.dart';
+
 import 'dashboard_screen.dart';
 import 'transaction_list_screen.dart';
 import 'analytics_screen.dart';
@@ -45,7 +47,7 @@ class _MainNavigationScreenState
         if (!mounted) return;
 
         context.read<TransactionProvider>().loadTransactions();
-context.read<SavingGoalProvider>().loadGoals();
+        context.read<SavingGoalProvider>().loadGoals();
       });
     }
   }
@@ -59,21 +61,31 @@ context.read<SavingGoalProvider>().loadGoals();
     );
   }
 
+  void _handleFabPressed() {
+    if (_selectedIndex == 3) {
+      SavingGoalsScreen.showAddGoalDialog(context);
+    } else {
+      _openAddTransaction();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isGoalsPage = _selectedIndex == 3;
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddTransaction,
+        onPressed: _handleFabPressed,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text(
-          'Tambah Transaksi',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        label: Text(
+          isGoalsPage ? 'Tambah Target' : 'Tambah Transaksi',
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       bottomNavigationBar: NavigationBar(
